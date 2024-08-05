@@ -1,12 +1,18 @@
-import { Component, OnInit } from '@angular/core';
-import { AuthenticationModels } from '../models/authentication.models';
-import { Validators,FormBuilder, FormGroup, FormControl } from '@angular/forms';
+import { Component, OnInit,inject } from '@angular/core';
+import { AuthenticationService } from '../service/authentication.service';
+import { Validators,FormBuilder, FormGroup, FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { AlertController, LoadingController } from '@ionic/angular';
 import { Router } from '@angular/router';
+import { IonicModule,  } from '@ionic/angular';
+import { RouterLink } from '@angular/router';
+import { Storage } from '@ionic/storage-angular';
+
 @Component({
   selector: 'app-login',
   templateUrl: './login.page.html',
   styleUrls: ['./login.page.scss'],
+  standalone: true,
+  imports: [IonicModule, RouterLink,FormsModule,ReactiveFormsModule],
 })
 export class LoginPage implements OnInit {
    credentials = new FormGroup ({
@@ -14,32 +20,37 @@ export class LoginPage implements OnInit {
     password: new FormControl(),
   });
   constructor(	private fb: FormBuilder,
-		// private authModels: AuthenticationModels,
 		private alertController: AlertController,
 		private router: Router,
-		private loadingController: LoadingController) { }
+		private loadingController: LoadingController,) { }
 
-  
+    authService = inject(AuthenticationService);
+
 
   async login(){
     const loading = await this.loadingController.create();
 		await loading.present();
 
-    // this.authModels.login(this.credentials?.value).subscribe(
-    //   async(res) =>{
-    //     await loading.dismiss();
-    //     this.router.navigateByUrl('/admin', {replaceUrl: true} )
-    //   },
-    //   async(res) =>{
-    //     await loading.dismiss();
-    //     const alert = await this.alertController.create({
-    //       header: 'Error al Iniciar Session',
-    //       message: res.error.error,
-    //       buttons: ['OK']
-    //     });
-    //     await alert.present();
-    //   }
-    // )
+
+
+    this.authService.login({
+      email: this.credentials.value.email,
+      password: this.credentials.value.password,
+    }).subscribe(
+      async(res) =>{
+        await loading.dismiss();
+        this.router.navigateByUrl('/admin', {replaceUrl: true} )
+      },
+      async(res) =>{
+        await loading.dismiss();
+        const alert = await this.alertController.create({
+          header: 'Error al Iniciar Session',
+          message: res.error.error,
+          buttons: ['OK']
+        });
+        await alert.present();
+      }
+    )
 
   }
   get email(){
