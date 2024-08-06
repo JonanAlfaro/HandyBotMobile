@@ -38,6 +38,7 @@ export class LoginPage implements OnInit {
       password: this.credentials.value.password,
     }).subscribe(
       async(res) =>{
+        console.log(res)
         await loading.dismiss();
         this.router.navigateByUrl('/admin', {replaceUrl: true} )
       },
@@ -45,7 +46,7 @@ export class LoginPage implements OnInit {
         await loading.dismiss();
         const alert = await this.alertController.create({
           header: 'Error al Iniciar Session',
-          message: res.error.error,
+          message: res,
           buttons: ['OK']
         });
         await alert.present();

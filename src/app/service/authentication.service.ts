@@ -1,8 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { map, tap, switchMap } from 'rxjs/operators';
 import { BehaviorSubject, from, Observable } from 'rxjs';
-import { Storage } from '@ionic/storage-angular';
 
 const TOKEN_KEY = 'auth-token';
 
@@ -35,14 +34,16 @@ export class AuthenticationService {
   }
 
   login(credentials: { email: string; password: string }): Observable<any> {
-    return this.http.post(`https://reqres.in/api/login`, credentials).pipe(
-      map((data: any) => data.token),
-      switchMap((token) => {
-		localStorage.setItem(TOKEN_KEY, token);
-        return from(token);
-      }),
-      tap(() => {
-        this.isAuthenticated.next(true);
+    return this.http.post<any>(`http://localhost:4000/auth/login`, credentials, {
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json'
+      })
+    }).pipe(
+      map((data: any) => data.token), // Extrae el token del `data`
+      tap((token) => {
+        console.log(token);
+        localStorage.setItem(TOKEN_KEY, token); // Guarda el token en `localStorage`
+        this.isAuthenticated.next(true); // Actualiza el estado de autenticación
       })
     );
   }
