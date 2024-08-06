@@ -24,7 +24,7 @@ export class LoginPage implements OnInit {
 		private loadingController: LoadingController,) { }
 
     authService = inject(AuthenticationService);
-
+   
 
   async login(){
     const loading = await this.loadingController.create();
@@ -37,15 +37,23 @@ export class LoginPage implements OnInit {
       password: this.credentials.value.password,
     }).subscribe(
       async(res) =>{
-        console.log(res)
+        
         await loading.dismiss();
+
+        let isAdmin : boolean = false;
+        if(res.idAdmin !== null)
+          isAdmin = res.idAdmin === 'ATH123';
+
+        if(isAdmin)
         this.router.navigateByUrl('/admin', {replaceUrl: true} )
+        else
+        this.router.navigateByUrl('/user', {replaceUrl: true} )
       },
       async(res) =>{
         await loading.dismiss();
         const alert = await this.alertController.create({
           header: 'Error al Iniciar Session',
-          message: res,
+          message: res.error.text,
           buttons: ['OK']
         });
         await alert.present();

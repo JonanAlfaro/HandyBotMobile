@@ -7,6 +7,7 @@ import { addIcons } from 'ionicons';
 import { add } from 'ionicons/icons';
 import { CardComponent } from "../components/card/card.component";
 import { MovimientoService, Movimiento  } from '../service/movimientoservice';
+
 @Component({
   selector: 'app-admin',
   templateUrl: './admin.page.html',
@@ -20,12 +21,15 @@ import { MovimientoService, Movimiento  } from '../service/movimientoservice';
 export class AdminPage implements OnInit {
   constructor() {
     addIcons({ add });
+    
    }
+
 
   movimientoService = inject(MovimientoService);
   movimientos: Movimiento[] = [];
 
   async ngOnInit() {
+
     const response = await this.movimientoService.getAll();
     this.movimientos = response;
   }

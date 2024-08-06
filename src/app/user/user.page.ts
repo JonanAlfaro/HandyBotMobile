@@ -1,7 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonicModule } from '@ionic/angular';
+import { IonicModule} from '@ionic/angular';
+import { MovimientoService, Movimiento  } from '../service/movimientoservice';
+
 @Component({
   selector: 'app-user',
   templateUrl: './user.page.html',
@@ -13,7 +15,14 @@ export class UserPage implements OnInit {
 
   constructor() { }
 
-  ngOnInit() {
+
+  movimientoService = inject(MovimientoService);
+  movimientos: Movimiento[] = [];
+
+  async ngOnInit() {
+
+    const response = await this.movimientoService.getAll();
+    this.movimientos = response;
   }
 
 }

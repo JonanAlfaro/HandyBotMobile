@@ -25,7 +25,6 @@ export class AuthenticationService {
   async loadToken() {
     const token = localStorage.getItem(TOKEN_KEY);
     if (token) {
-      console.log('set token: ', token);
       this.token = token;
       this.isAuthenticated.next(true);
     } else {
@@ -39,10 +38,11 @@ export class AuthenticationService {
         'Content-Type': 'application/json'
       })
     }).pipe(
-      map((data: any) => data.token), // Extrae el token del `data`
-      tap((token) => {
-        console.log(token);
-        localStorage.setItem(TOKEN_KEY, token); // Guarda el token en `localStorage`
+      map((data: any) => data), // Extrae el token del `data`
+      tap((data: any) => {
+
+        localStorage.setItem(TOKEN_KEY, data.token); // Guarda el token en `localStorage`
+        localStorage.setItem(data.token, data);
         this.isAuthenticated.next(true); // Actualiza el estado de autenticación
       })
     );
@@ -52,4 +52,5 @@ export class AuthenticationService {
     this.isAuthenticated.next(false);
     return localStorage.removeItem(TOKEN_KEY);
   }
+
 }
