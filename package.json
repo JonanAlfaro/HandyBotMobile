@@ -30,8 +30,11 @@
     "@ionic/angular": "^8.0.0",
     "@ionic/storage": "^4.0.0",
     "@ionic/storage-angular": "^4.0.0",
+    "@mediapipe/camera_utils": "^0.3.1675466862",
+    "@mediapipe/hands": "^0.4.1675469240",
     "ionicons": "^7.0.0",
     "rxjs": "~7.8.0",
+    "socket.io-client": "^4.7.5",
     "tslib": "^2.3.0",
     "zone.js": "~0.14.2"
   },

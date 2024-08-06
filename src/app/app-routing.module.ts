@@ -24,6 +24,10 @@ export const routes: Routes = [
   {
     path: 'user',
     loadComponent: () =>  import('./user/user.page').then( m => m.UserPage)
+  },
+  {
+    path: 'hand-tracking',
+    loadComponent: () =>  import('./hand-tracking/hand-tracking.component').then( m => m.HandTrackingComponent)
   }
 ];
 

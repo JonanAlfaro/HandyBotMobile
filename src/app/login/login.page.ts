@@ -5,7 +5,6 @@ import { AlertController, LoadingController } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { IonicModule,  } from '@ionic/angular';
 import { RouterLink } from '@angular/router';
-import { Storage } from '@ionic/storage-angular';
 
 @Component({
   selector: 'app-login',
