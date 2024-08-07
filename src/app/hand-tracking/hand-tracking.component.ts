@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { IonicModule,  } from '@ionic/angular';
 import { RouterLink } from '@angular/router';
-import io from 'socket.io-client';
+import { io, Socket } from 'socket.io-client';
 import { Hands, HAND_CONNECTIONS, HandsInterface } from '@mediapipe/hands';
 import { Camera } from '@mediapipe/camera_utils';
 import { drawConnectors, drawLandmarks } from '@mediapipe/drawing_utils';
@@ -17,7 +17,7 @@ export class HandTrackingComponent implements OnInit {
   videoElement!: HTMLVideoElement;
   canvasElement!: HTMLCanvasElement;
   canvasCtx!: CanvasRenderingContext2D;
-  socket: any;
+  socket!: Socket;
   ESP32_IP: string = '192.168.100.251';
   ESP32_PORT: number = 12345;
   prevPinkyTipY: number = 0;
@@ -25,6 +25,13 @@ export class HandTrackingComponent implements OnInit {
   constructor() {}
 
   ngOnInit() {
+    this.socket = io(`http://${this.ESP32_IP}:${this.ESP32_PORT}`);
+    this.socket.on('connect', () => {
+      console.log('Connected to ESP32');
+    });
+    this.socket.on('disconnect', () => {
+      console.log('Disconnected from ESP32');
+    });
   }
 
   ngAfterViewInit() {
@@ -141,7 +148,12 @@ export class HandTrackingComponent implements OnInit {
     this.prevRingTipY = ringTip.y;
 
     const data = `${servo1Angle},${servo2Angle},${servo3Angle},${direction}\n`;
-    console.log(data)
-    // this.socket.emit('servo_control', data);
+    
+    if (this.socket.connected) {
+      console.log(data)
+      this.socket.emit('servo_control', data);
+    } else {
+      console.error('Socket is not connected');
+    }
   }
 }
