@@ -35,10 +35,9 @@ export class HandTrackingComponent implements OnInit {
 
   ngAfterViewInit() {
     console.log("afterinit");
-    setTimeout(() => {
-      this.socket = io(`http://${this.ESP32_IP}:${this.ESP32_PORT}`);
-      this.initializeHands();
-    }, 1000);
+
+    this.socket = io(`http://${this.ESP32_IP}:${this.ESP32_PORT}`);
+    this.initializeHands();
   }
 
   initializeHands() {
@@ -51,17 +50,18 @@ export class HandTrackingComponent implements OnInit {
       minDetectionConfidence: 0.7,
       minTrackingConfidence: 0.7,
     });
-
-    this.hands.onResults(this.onResults.bind(this));
-
-    this.camera = new Camera(this.videoElement.nativeElement, {
-      onFrame: async () => {
-        await this.hands?.send({ image: this.videoElement.nativeElement });
-      },
-      width: 640,
-      height: 480,
-    });
-    this.camera.start();
+    this.hands.onResults(this.onResults.bind(this));  
+    setTimeout(() => {
+      this.camera = new Camera(this.videoElement.nativeElement, {
+        onFrame: async () => {
+          await this.hands?.send({ image: this.videoElement.nativeElement });
+        },
+        width: 640,
+        height: 480,
+      });
+      this.camera.start();
+    }, 1000);
+  
   }
 
   onResults(results: { image: any; multiHandLandmarks: any; }) {
