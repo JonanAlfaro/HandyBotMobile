@@ -43,7 +43,7 @@ export class HandTrackingComponent implements OnInit {
 
   initializeHands() {
     this.hands = new Hands({
-      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/${file}`,
+      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/${file}`,
     });
 
     this.hands.setOptions({
