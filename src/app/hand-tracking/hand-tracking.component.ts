@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { Hands, HAND_CONNECTIONS} from '@mediapipe/hands';
 import { Camera } from '@mediapipe/camera_utils';
-import { drawConnectors,drawLandmarks,  } from '@mediapipe/drawing_utils';
+import { drawConnectors,drawLandmarks  } from '@mediapipe/drawing_utils';
 import { IonicModule,  } from '@ionic/angular';
 import { RouterLink } from '@angular/router';
 import io from 'socket.io-client';
@@ -17,10 +17,11 @@ export class HandTrackingComponent implements OnInit {
   @ViewChild('videoElement') videoElement!: ElementRef;
   @ViewChild('canvasElement') canvasElement!: ElementRef;
 
-  constructor(private hands: Hands,private camera: Camera){
+  constructor(){
 
   }
-  
+  hands: Hands| undefined;
+  camera: Camera | undefined;
   socket: any;
   ESP32_IP: string = '192.168.100.251';
   ESP32_PORT: number = 12345;
