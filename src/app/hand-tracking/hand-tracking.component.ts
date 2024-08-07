@@ -13,8 +13,7 @@ import io from 'socket.io-client';
   imports: [IonicModule, RouterLink],
 })
 export class HandTrackingComponent implements OnInit {
-  @ViewChild('videoElement')
-  videoElement!: ElementRef;
+  @ViewChild('videoElement') videoElement!: ElementRef;
   @ViewChild('canvasElement') canvasElement!: ElementRef;
 
   hands: Hands | undefined;
@@ -27,8 +26,15 @@ export class HandTrackingComponent implements OnInit {
   prevRingTipY: number = 0;
 
   ngOnInit() {
-    this.socket = io(`http://${this.ESP32_IP}:${this.ESP32_PORT}`);
-    this.initializeHands();
+  
+  }
+  
+  ngAfterViewInit() {
+    console.log("afterinit");
+    setTimeout(() => {
+      this.socket = io(`http://${this.ESP32_IP}:${this.ESP32_PORT}`);
+      this.initializeHands();
+    }, 1000);
   }
 
   initializeHands() {
