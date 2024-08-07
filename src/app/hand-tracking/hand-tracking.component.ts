@@ -1,10 +1,10 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
-import { Hands, HAND_CONNECTIONS} from '@mediapipe/hands';
-import { Camera } from '@mediapipe/camera_utils';
-import { drawConnectors,drawLandmarks  } from '@mediapipe/drawing_utils';
 import { IonicModule,  } from '@ionic/angular';
 import { RouterLink } from '@angular/router';
 import io from 'socket.io-client';
+import { Hands, HAND_CONNECTIONS, HandsInterface } from '@mediapipe/hands';
+import { Camera } from '@mediapipe/camera_utils';
+import { drawConnectors, drawLandmarks } from '@mediapipe/drawing_utils';
 
 @Component({
   selector: 'app-hand-tracking',
@@ -14,80 +14,104 @@ import io from 'socket.io-client';
   imports: [IonicModule, RouterLink],
 })
 export class HandTrackingComponent implements OnInit {
-  @ViewChild('videoElement') videoElement!: ElementRef;
-  @ViewChild('canvasElement') canvasElement!: ElementRef;
-
-  constructor(){
-
-  }
-  hands: Hands| undefined;
-  camera: Camera | undefined;
+  videoElement!: HTMLVideoElement;
+  canvasElement!: HTMLCanvasElement;
+  canvasCtx!: CanvasRenderingContext2D;
   socket: any;
   ESP32_IP: string = '192.168.100.251';
   ESP32_PORT: number = 12345;
-
   prevPinkyTipY: number = 0;
   prevRingTipY: number = 0;
+  constructor() {}
 
   ngOnInit() {
-  
   }
 
   ngAfterViewInit() {
-    console.log("afterinit");
+    this.videoElement = document.getElementsByClassName('input_video')[0] as HTMLVideoElement;
+    this.canvasElement = document.getElementsByClassName('output_canvas')[0] as HTMLCanvasElement;
+    this.canvasCtx = this.canvasElement.getContext('2d') as CanvasRenderingContext2D;
 
-    this.socket = io(`http://${this.ESP32_IP}:${this.ESP32_PORT}`);
-    this.initializeHands();
+    this.initializeHandTracking();
   }
 
-  initializeHands() {
-    this.hands = new Hands({
-      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/${file}`,
+  async initializeHandTracking() {
+    const hands = new Hands({
+      locateFile: (file) => {
+        return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+      },
     });
 
-    this.hands.setOptions({
-      maxNumHands: 1,
-      minDetectionConfidence: 0.7,
-      minTrackingConfidence: 0.7,
+    hands.setOptions({
+      maxNumHands: 2,
+      modelComplexity: 1,
+      minDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.5,
     });
-    this.hands.onResults(this.onResults.bind(this));  
-    setTimeout(() => {
-      this.camera = new Camera(this.videoElement.nativeElement, {
-        onFrame: async () => {
-          await this.hands?.send({ image: this.videoElement.nativeElement });
-        },
-        width: 640,
-        height: 480,
-      });
-      this.camera.start();
-    }, 1000);
-  
+
+    hands.onResults(this.onResults.bind(this));
+
+    const camera = new Camera(this.videoElement, {
+      onFrame: async () => {
+        await hands.send({ image: this.videoElement });
+      },
+      width: 1280,
+      height: 720,
+    });
+
+    camera.start();
   }
 
-  onResults(results: { image: any; multiHandLandmarks: any; }) {
-    const canvasCtx = this.canvasElement.nativeElement.getContext('2d');
-    canvasCtx.save();
-    canvasCtx.clearRect(0, 0, this.canvasElement.nativeElement.width, this.canvasElement.nativeElement.height);
-    canvasCtx.drawImage(results.image, 0, 0, this.canvasElement.nativeElement.width, this.canvasElement.nativeElement.height);
-
+  onResults(results: any) {
+    this.canvasCtx.save();
+    this.canvasCtx.clearRect(0, 0, this.canvasElement.width, this.canvasElement.height);
+    this.canvasCtx.drawImage(results.image, 0, 0, this.canvasElement.width, this.canvasElement.height);
+    this.drawZones(this.canvasCtx);
     if (results.multiHandLandmarks) {
-      for (const handLandmarks of results.multiHandLandmarks) {
-        drawConnectors(canvasCtx, handLandmarks, HAND_CONNECTIONS,
-          { color: '#00FF00', lineWidth: 5 });
-        drawLandmarks(canvasCtx, handLandmarks, { color: '#FF0000', lineWidth: 2 });
+      for (const landmarks of results.multiHandLandmarks) {
+        
+        drawConnectors(this.canvasCtx, landmarks, HAND_CONNECTIONS, {
+          color: '#00FF00',
+          lineWidth: 5,
+        });
+        drawLandmarks(this.canvasCtx, landmarks, { color: '#FF0000', lineWidth: 2 });
+        this.processHandLandmarks(landmarks);
       }
     }
-    canvasCtx.restore();
+    this.canvasCtx.restore();
   }
-  processHandLandmarks(handLandmarks: { landmark: { [key: number]: { x: number; y: number; z?: number } } }) {
-    // Acceso a los puntos clave usando índices
-    const thumbTip = handLandmarks.landmark[4];  // THUMB_TIP
-    const indexTip = handLandmarks.landmark[8];  // INDEX_FINGER_TIP
-    const middleTip = handLandmarks.landmark[12]; // MIDDLE_FINGER_TIP
-    const ringTip = handLandmarks.landmark[16];  // RING_FINGER_TIP
-    const pinkyTip = handLandmarks.landmark[20];  // PINKY_TIP
-    const pinkyMcp = handLandmarks.landmark[19];  // PINKY_MCP
-    const ringMcp = handLandmarks.landmark[15];  // RING_FINGER_MCP
+  drawZones(ctx: CanvasRenderingContext2D) {
+    const height = this.canvasElement.height;
+    const width = this.canvasElement.width;
+    const zoneHeight = height / 3;
+
+    ctx.strokeStyle = 'green';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, zoneHeight);
+    ctx.lineTo(width, zoneHeight);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(0, 2 * zoneHeight);
+    ctx.lineTo(width, 2 * zoneHeight);
+    ctx.stroke();
+
+    ctx.fillStyle = 'blue';
+    ctx.font = '24px Arial';
+    ctx.fillText('Zone 1', 10, zoneHeight / 2);
+    ctx.fillText('Zone 2', 10, 1.5 * zoneHeight);
+    ctx.fillText('Zone 3', 10, 2.5 * zoneHeight);
+  }
+  processHandLandmarks(handLandmarks: any) {
+   
+    const thumbTip = handLandmarks[4];
+    const indexTip = handLandmarks[8];
+    const middleTip = handLandmarks[12];
+    const ringTip = handLandmarks[16];
+    const pinkyTip = handLandmarks[20];
+    const pinkyMcp = handLandmarks[19];
+    const ringMcp = handLandmarks[13];
 
     const servo1Angle = Math.round((thumbTip.x + indexTip.x) / 2 * 180);
     const servo2Angle = Math.round((middleTip.y + ringTip.y) / 2 * 180);
@@ -117,7 +141,7 @@ export class HandTrackingComponent implements OnInit {
     this.prevRingTipY = ringTip.y;
 
     const data = `${servo1Angle},${servo2Angle},${servo3Angle},${direction}\n`;
-
-    this.socket.emit('servo_control', data);
+    console.log(data)
+    // this.socket.emit('servo_control', data);
   }
 }
