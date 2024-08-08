@@ -5,6 +5,7 @@ import { io, Socket } from 'socket.io-client';
 import { Hands, HAND_CONNECTIONS, HandsInterface } from '@mediapipe/hands';
 import { Camera } from '@mediapipe/camera_utils';
 import { drawConnectors, drawLandmarks } from '@mediapipe/drawing_utils';
+import { createServer } from 'net'
 
 @Component({
   selector: 'app-hand-tracking',
@@ -25,13 +26,14 @@ export class HandTrackingComponent implements OnInit {
   constructor() {}
 
   ngOnInit() {
-    this.socket = io(`http://${this.ESP32_IP}:${this.ESP32_PORT}`);
-    this.socket.on('connect', () => {
-      console.log('Connected to ESP32');
-    });
-    this.socket.on('disconnect', () => {
-      console.log('Disconnected from ESP32');
-    });
+
+    // this.socket = io(`http://${this.ESP32_IP}:${this.ESP32_PORT}`);
+    // this.socket.on('connect', () => {
+    //   console.log('Connected to ESP32');
+    // });
+    // this.socket.on('disconnect', () => {
+    //   console.log('Disconnected from ESP32');
+    // });
   }
 
   ngAfterViewInit() {
@@ -148,12 +150,43 @@ export class HandTrackingComponent implements OnInit {
     this.prevRingTipY = ringTip.y;
 
     const data = `${servo1Angle},${servo2Angle},${servo3Angle},${direction}\n`;
+
+    const server = createServer((socket) => {
+      console.log('Arduino connected');
     
-    if (this.socket.connected) {
-      console.log(data)
-      this.socket.emit('servo_control', data);
-    } else {
-      console.error('Socket is not connected');
-    }
+      // Manejar datos recibidos del Arduino
+      socket.on('data', (data) => {
+        console.log('Received from Arduino:', data.toString());
+      });
+    
+      // Manejar la desconexión del Arduino
+      socket.on('end', () => {
+        console.log('Arduino disconnected');
+      });
+    
+      // Manejar errores de socket
+      socket.on('error', (err) => {
+        console.error('Socket error:', err);
+      });
+    
+      // Enviar mensaje al Arduino cada 5 segundos
+      setInterval(() => {
+        const message = 'Hello from Node.js server\n';
+        console.log('Sending to Arduino:', message);
+        socket.write(data);
+      }, 5000);
+    });
+
+    const PORT = 12345;
+    server.listen(PORT, () => {
+      console.log(`Server listening on port ${PORT}`);
+    });
+    
+    // if (this.socket.connected) {
+    //   console.log(data)
+    //   this.socket.emit('servo_control', data);
+    // } else {
+    //   console.error('Socket is not connected');
+    // }
   }
 }
