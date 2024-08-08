@@ -10,5 +10,9 @@
     "/auth/register": {
       "target": "http://localhost:4000",
       "secure": false
+    },
+    "/webSocket": {
+      "target": "http://localhost:4000",
+      "secure": false
     }
   }

@@ -4,6 +4,7 @@
       <ion-back-button></ion-back-button>
     </ion-buttons>
     <ion-title>Grabar movimiento</ion-title>
+      <ion-progress-bar  type="indeterminate" *ngIf="recordingLoading"></ion-progress-bar>
   </ion-toolbar>
 </ion-header>
 
@@ -12,4 +13,6 @@
     <video class="input_video" style="display: none;"></video>
     <canvas class="output_canvas" width="540" height="380"></canvas>
   </div> 
+  <ion-button type="submit" color="danger" (click)="startRecording()"  [disabled]="recordingLoading" >Iniciar Grabacion...</ion-button>
+  <ion-button type="submit" (click)="playRecording()" *ngIf="hasMovement">Reproducir</ion-button>
 </ion-content>

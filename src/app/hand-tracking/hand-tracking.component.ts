@@ -1,46 +1,47 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit,inject} from '@angular/core';
 import { IonicModule,  } from '@ionic/angular';
 import { RouterLink } from '@angular/router';
-import { io, Socket } from 'socket.io-client';
 import { Hands, HAND_CONNECTIONS, HandsInterface } from '@mediapipe/hands';
 import { Camera } from '@mediapipe/camera_utils';
 import { drawConnectors, drawLandmarks } from '@mediapipe/drawing_utils';
+import { HandTrakingService } from '../service/hand-traking.service';
+import { NgIf } from '@angular/common';
+import { LoadingController } from '@ionic/angular';
+
+
+
 
 @Component({
   selector: 'app-hand-tracking',
   templateUrl: './hand-tracking.component.html',
   styleUrls: ['./hand-tracking.component.scss'],
   standalone: true,
-  imports: [IonicModule, RouterLink],
+  imports: [IonicModule, RouterLink,NgIf],
 })
 export class HandTrackingComponent implements OnInit {
   videoElement!: HTMLVideoElement;
   canvasElement!: HTMLCanvasElement;
   canvasCtx!: CanvasRenderingContext2D;
-  socket!: Socket;
-  ESP32_IP: string = '192.168.100.251';
-  ESP32_PORT: number = 12345;
   prevPinkyTipY: number = 0;
   prevRingTipY: number = 0;
-  constructor() {}
+  recordingLoading: boolean = false;
+  hasMovement: boolean = false;
+
+  constructor(private loadingController: LoadingController,) {}
+
+  handTrakingService = inject(HandTrakingService);
 
   ngOnInit() {
   }
 
   ngAfterViewInit() {
-    this.socket = io(`http://${this.ESP32_IP}:${this.ESP32_PORT}`);
-    this.socket.on('connect', () => {
-      console.log('Connected to ESP32');
-    });
+
     this.videoElement = document.getElementsByClassName('input_video')[0] as HTMLVideoElement;
     this.canvasElement = document.getElementsByClassName('output_canvas')[0] as HTMLCanvasElement;
     this.canvasCtx = this.canvasElement.getContext('2d') as CanvasRenderingContext2D;
 
     this.initializeHandTracking();
 
-    this.socket.on('disconnect', () => {
-      console.log('Disconnected from ESP32');
-    });
   }
 
   async initializeHandTracking() {
@@ -83,6 +84,7 @@ export class HandTrackingComponent implements OnInit {
           lineWidth: 5,
         });
         drawLandmarks(this.canvasCtx, landmarks, { color: '#FF0000', lineWidth: 2 });
+
         this.processHandLandmarks(landmarks);
       }
     }
@@ -149,12 +151,39 @@ export class HandTrackingComponent implements OnInit {
     this.prevRingTipY = ringTip.y;
 
     const data = `${servo1Angle},${servo2Angle},${servo3Angle},${direction}\n`;
-    
-    if (this.socket.connected) {
-      console.log(data)
-      this.socket.emit('servo_control', data);
-    } else {
-      console.error('Socket is not connected');
-    }
+    this.handTrakingService.addMovement(data);
+  }
+
+  startRecording() {
+    this.hasMovement = false  
+    this.handTrakingService.startRecording();
+    console.log(this.hasMovement, this.handTrakingService.getMovements())
+    this.recordingLoading = true;
+
+    setTimeout(() => {
+      this.handTrakingService.stopRecording();
+      this.recordingLoading = false;
+      if (this.handTrakingService.getMovements().length > 0)
+        this.hasMovement = true
+      console.log(this.hasMovement, this.handTrakingService.getMovements())
+    }, 10000);
+  }
+
+
+  async playRecording(){
+    const loading = await this.loadingController.create();
+		await loading.present();
+    const movimients = this.handTrakingService.getMovements()
+    this.handTrakingService.playRecording(movimients).subscribe(
+      async(res) =>{ 
+        console.log(res)
+        await loading.dismiss();
+      },
+      async(res) =>{
+        console.log(res)
+        await loading.dismiss();
+      }
+    )
+
   }
 }
