@@ -17,7 +17,7 @@
         <ion-card-content>
           {{mov.descripcion}}
         </ion-card-content>     
-        <ion-button fill="clear">Ver movimiento</ion-button>
+        <ion-button (click)="playRecording(mov.comandos)" fill="clear">Ver movimiento</ion-button>
       </ion-card>
     </ion-item>
   </ion-list>

@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonicModule} from '@ionic/angular';
 import { MovimientoService, Movimiento  } from '../service/movimientoservice';
-
+import { HandTrakingService } from '../service/hand-traking.service';
+import { LoadingController } from '@ionic/angular';
 @Component({
   selector: 'app-user',
   templateUrl: './user.page.html',
@@ -13,9 +14,10 @@ import { MovimientoService, Movimiento  } from '../service/movimientoservice';
 })
 export class UserPage implements OnInit {
 
-  constructor() { }
+  
+  constructor(private loadingController: LoadingController,) {}
 
-
+  handTrakingService = inject(HandTrakingService);
   movimientoService = inject(MovimientoService);
   movimientos: Movimiento[] = [];
 
@@ -23,6 +25,26 @@ export class UserPage implements OnInit {
 
     const response = await this.movimientoService.getAll();
     this.movimientos = response;
+  }
+
+  async playRecording(comandos: []){
+    const loading = await this.loadingController.create();
+		await loading.present();
+    this.handTrakingService.playRecording(comandos).subscribe(
+      async (res) => {
+        setTimeout(() => {
+          console.log(res)
+          loading.dismiss();
+        }, 500);
+      },
+      async (res) => {
+        setTimeout(() => {
+          console.log(res)
+          loading.dismiss();
+        }, 500);
+      }
+    )
+
   }
 
 }
