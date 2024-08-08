@@ -175,13 +175,17 @@ export class HandTrackingComponent implements OnInit {
 		await loading.present();
     const movimients = this.handTrakingService.getMovements()
     this.handTrakingService.playRecording(movimients).subscribe(
-      async(res) =>{ 
-        console.log(res)
-        await loading.dismiss();
+      async (res) => {
+        setTimeout(() => {
+          console.log(res)
+          loading.dismiss();
+        }, 500);
       },
-      async(res) =>{
-        console.log(res)
-        await loading.dismiss();
+      async (res) => {
+        setTimeout(() => {
+          console.log(res)
+          loading.dismiss();
+        }, 500);
       }
     )
 
